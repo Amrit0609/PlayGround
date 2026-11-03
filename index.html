@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Corner Commerce</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="game-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Small business sim</p>
+          <h1>Corner Commerce</h1>
+        </div>
+        <div class="topbar-stats">
+          <div class="pill"><span>Day</span><strong id="dayValue">1</strong></div>
+          <div class="pill"><span>Time</span><strong id="timeValue">08:00</strong></div>
+          <div class="pill"><span>Cash</span><strong id="cashValue">$1,200</strong></div>
+        </div>
+      </header>
+
+      <main class="main-game">
+        <section class="shop-panel">
+          <canvas id="gameCanvas" width="860" height="520" aria-label="Business simulation game canvas"></canvas>
+        </section>
+
+        <aside class="sidebar">
+          <div class="card">
+            <h2>Business</h2>
+            <div class="stats-grid">
+              <div><span>Reputation</span><strong id="repValue">50%</strong></div>
+              <div><span>Energy</span><strong id="energyValue">90%</strong></div>
+              <div><span>Staff</span><strong id="staffValue">1</strong></div>
+              <div><span>Queue</span><strong id="queueValue">0</strong></div>
+            </div>
+          </div>
+
+          <div class="card actions-card">
+            <h2>Actions</h2>
+            <div class="button-grid">
+              <button data-action="restock">Restock</button>
+              <button data-action="hire">Hire helper</button>
+              <button data-action="marketing">Ad campaign</button>
+              <button data-action="upgrade">Upgrade shop</button>
+              <button data-action="open">Toggle open</button>
+              <button data-action="reset">Reset run</button>
+            </div>
+          </div>
+
+          <div class="card inventory-card">
+            <h2>Inventory</h2>
+            <div id="inventoryList" class="inventory-list"></div>
+          </div>
+
+          <div class="card log-card">
+            <h2>Journal</h2>
+            <ul id="logList" class="log-list"></ul>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <script src="game.js"></script>
+  </body>
+</html>
