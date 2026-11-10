@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#071a1a" />
+  <title>Longform — Test Cricket</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="game-shell">
+    <div id="scene" aria-label="3D cricket ground"></div>
+    <div class="vignette"></div>
+
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Longform home"><span class="brand-mark">L</span><span>LONGFORM<span class="brand-sub">CRICKET CLUB</span></span></a>
+      <div class="match-tag"><span class="live-dot"></span><span>TEST MATCH</span><i></i><span>DAY 1 · SESSION 2</span></div>
+      <button class="icon-button" id="soundBtn" aria-label="Toggle sound" title="Sound on/off"><span id="soundIcon">♫</span></button>
+    </header>
+
+    <section class="scoreboard" aria-live="polite">
+      <div class="score-main">
+        <div class="team-line"><span class="flag">🇦🇺</span><span class="team-name">AUSTRALIA</span><span class="innings-label">1ST INNINGS</span></div>
+        <div class="score-numbers"><strong id="score">0</strong><span class="slash">/</span><span id="wickets">0</span><span class="overs">(<span id="overs">0.0</span> ov)</span></div>
+        <div class="score-meta"><span>CRR <b id="crr">0.00</b></span><span class="meta-sep">·</span><span>NEED <b id="need">36</b> TO WIN</span></div>
+      </div>
+      <div class="score-divider"></div>
+      <div class="batter-card">
+        <div class="card-label">AT THE CREASE</div>
+        <div class="batter-row"><span class="on-strike"></span><span>J. HAYES</span><b id="batterRuns">0</b><small id="batterBalls">(0)</small></div>
+        <div class="batter-row muted"><span class="on-strike empty"></span><span>M. CARTER</span><b>0</b><small>(0)</small></div>
+        <div class="card-footer"><span>●</span> ON STRIKE <span class="facing">J. HAYES</span></div>
+      </div>
+      <div class="score-divider bowler-divider"></div>
+      <div class="bowler-card"><div class="card-label">BOWLING</div><div class="bowler-name">A. PATEL</div><div class="bowler-stats"><span><b id="bowlerWickets">0</b>/<b id="bowlerRuns">0</b></span><small><span id="bowlerOvers">0.0</span> overs</small></div><div class="speed"><span class="speed-dot"></span> <span id="speed">—</span> <small>km/h</small></div></div>
+    </section>
+
+    <div class="over-strip"><span class="over-title">THIS OVER</span><div class="ball-track" id="ballTrack"><i class="empty-ball"></i><i class="empty-ball"></i><i class="empty-ball"></i><i class="empty-ball"></i><i class="empty-ball"></i><i class="empty-ball"></i></div><span class="over-summary" id="overSummary">0 runs</span></div>
+
+    <div class="crosshair"><span></span></div>
+    <div class="delivery-callout" id="deliveryCallout"><span class="callout-line"></span><span id="calloutText">READY WHEN YOU ARE</span></div>
+
+    <section class="bottom-ui">
+      <div class="left-hint"><span class="keycap">A</span><span class="keycap">S</span><span class="keycap">D</span><span class="hint-copy">CHOOSE YOUR SHOT</span></div>
+      <div class="shot-select" role="group" aria-label="Choose a shot">
+        <button class="shot-btn active" data-shot="drive"><span class="shot-key">A</span><span class="shot-icon">↗</span><span class="shot-name">DRIVE</span><small>CONTROL</small></button>
+        <button class="shot-btn" data-shot="loft"><span class="shot-key">S</span><span class="shot-icon">⌁</span><span class="shot-name">LOFT</span><small>POWER</small></button>
+        <button class="shot-btn" data-shot="defend"><span class="shot-key">D</span><span class="shot-icon">◒</span><span class="shot-name">DEFEND</span><small>SAFE</small></button>
+      </div>
+      <button class="swing-button" id="swingBtn"><span class="swing-ring"></span><span class="swing-label">PLAY SHOT</span><span class="swing-key">SPACE</span></button>
+    </section>
+
+    <div class="bottom-foot"><span>THE LONG GAME</span><span class="foot-center">12 BALL INNINGS · 3 WICKETS</span><button id="resetBtn">↻ &nbsp;RESTART MATCH</button></div>
+
+    <div class="overlay" id="startOverlay">
+      <div class="intro-card">
+        <div class="intro-kicker"><span></span> THE LONG GAME <span></span></div>
+        <h1>Every ball<br>has a <em>story.</em></h1>
+        <p>Settle in at the crease. Read the delivery.<br>Build an innings, one shot at a time.</p>
+        <div class="intro-rule"></div>
+        <div class="intro-details"><span><b>12</b> BALLS</span><span><b>3</b> WICKETS</span><span><b>36</b> TO WIN</span></div>
+        <button class="start-button" id="startBtn">TAKE YOUR GUARD <span>→</span></button>
+        <div class="intro-controls"><span>CHOOSE</span> A / S / D <i>·</i> <span>PLAY</span> SPACE <i>·</i> <span>TOUCH</span> TAP</div>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="resultOverlay">
+      <div class="intro-card result-card"><div class="intro-kicker"><span></span> INNINGS COMPLETE <span></span></div><h1 id="resultTitle">A fine effort.</h1><p id="resultMessage">The story doesn't end here.</p><div class="result-score"><strong id="finalScore">0/0</strong><span>FROM 2 OVERS</span></div><button class="start-button" id="playAgainBtn">PLAY AGAIN <span>↻</span></button></div>
+    </div>
+
+    <div class="toast" id="toast"><span id="toastText">GOOD SHOT</span></div>
+    <div class="mobile-tip">Tap PLAY SHOT as the ball reaches you</div>
+  </main>
+  <script type="module" src="game.js"></script>
+</body>
+</html>
