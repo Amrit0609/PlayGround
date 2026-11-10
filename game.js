@@ -114,7 +114,20 @@ ball.visible=false;
 // Simple elegant boundary markers and a few sight-screen details.
 for(let i=0;i<24;i++){const a=i/24*Math.PI*2;const post=new THREE.Mesh(new THREE.CylinderGeometry(.06,.08,.56,6),mat(i%2?0xe5e0cd:0xb9a777));post.position.set(Math.cos(a)*42.75,.22,Math.sin(a)*42.75);scene.add(post);}
 
-const state={started:false,phase:'idle',shot:'drive',score:0,wickets:0,balls:0,overRuns:0,overBalls:0,playerRuns:0,playerBalls:0,bowlerRuns:0,bowlerWickets:0,delivery:null,ballResult:null,battingFirst:'J. HAYES',striker:'J. HAYES',partner:'M. CARTER',sound:true,lastTime:0};
+const challengeList=[
+  {name:'BOUNDARY HUNT',text:'Hit 2 boundaries this over',goal:2,kind:'boundaries'},
+  {name:'RUN RATE',text:'Score 8 runs this over',goal:8,kind:'runs'},
+  {name:'PURE TIMING',text:'Middle 2 deliveries this over',goal:2,kind:'timing'}
+];
+const deliveryTypes=[
+  {name:'GOOD LENGTH',hint:'WATCH THE BALL',duration:2.5,speed:138,bounce:.75,width:.66,swerve:0},
+  {name:'LATE SWING',hint:'WATCH FOR SWING',duration:2.55,speed:132,bounce:.78,width:.59,swerve:.62},
+  {name:'YORKER',hint:'DIG OUT THE YORKER',duration:2.34,speed:146,bounce:.38,width:.54,swerve:.08},
+  {name:'BOUNCER',hint:'GET ON TOP OF IT',duration:2.62,speed:141,bounce:1.55,width:.57,swerve:0},
+  {name:'SLOWER BALL',hint:'WAIT ON IT',duration:2.82,speed:112,bounce:.66,width:.7,swerve:-.12},
+  {name:'LATE SWING',hint:'WATCH FOR SWING',duration:2.55,speed:134,bounce:.78,width:.59,swerve:-.62}
+];
+const state={started:false,phase:'idle',shot:'drive',score:0,wickets:0,balls:0,overRuns:0,overBalls:0,playerRuns:0,playerBalls:0,bowlerRuns:0,bowlerWickets:0,delivery:null,ballResult:null,battingFirst:'J. HAYES',striker:'J. HAYES',partner:'M. CARTER',sound:true,lastTime:0,challenge:null,challengeIndex:0,challengesWon:0};
 const $=s=>document.querySelector(s);
 function ui(){
   $('#score').textContent=state.score;$('#wickets').textContent=state.wickets;$('#overs').textContent=`${Math.floor(state.balls/6)}.${state.balls%6}`;
@@ -123,18 +136,21 @@ function ui(){
   $('#bowlerWickets').textContent=state.bowlerWickets;$('#bowlerRuns').textContent=state.bowlerRuns;$('#bowlerOvers').textContent=`${Math.floor(state.balls/6)}.${state.balls%6}`;
   document.querySelector('.facing').textContent=state.striker;
   $('#overSummary').textContent=`${state.overRuns} run${state.overRuns===1?'':'s'}`;
+  if(state.challenge){$('#challengeName').textContent=state.challenge.name;$('#challengeText').textContent=state.challenge.done?'CHALLENGE COMPLETE':state.challenge.text;$('#challengeProgress').textContent=`${Math.min(state.challenge.progress,state.challenge.goal)} / ${state.challenge.goal}`;$('#challengeMeter').style.width=`${Math.min(100,state.challenge.progress/state.challenge.goal*100)}%`;$('#challengePanel').classList.toggle('completed',state.challenge.done);}
 }
+function setChallenge(index){const challenge=challengeList[index%challengeList.length];state.challengeIndex=index;state.challenge={...challenge,progress:0,done:false};ui();}
+function updateChallenge(result,d){if(!state.challenge||state.challenge.done)return;const runs=Number(result)||0;if(state.challenge.kind==='boundaries'&&(runs===4||runs===6))state.challenge.progress++;if(state.challenge.kind==='runs')state.challenge.progress+=runs;if(state.challenge.kind==='timing'&&d.hit&&d.quality>.78)state.challenge.progress++;if(state.challenge.progress>=state.challenge.goal){state.challenge.done=true;state.challengesWon++;toast('CHALLENGE COMPLETE!');soundHit(280);}ui();}
 function setCallout(text,show=true){$('#calloutText').textContent=text;$('#deliveryCallout').classList.toggle('visible',show);}
 let toastTimer;
 function toast(text){$('#toastText').textContent=text;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),1050);}
 function soundHit(freq=150){if(!state.sound)return;try{const ctx=new AudioContext(),osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='triangle';osc.frequency.setValueAtTime(freq,ctx.currentTime);osc.frequency.exponentialRampToValueAtTime(54,ctx.currentTime+.12);gain.gain.setValueAtTime(.07,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.16);osc.connect(gain);gain.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+.17);osc.onended=()=>ctx.close();}catch{}}
 function setShot(name){if(state.phase==='finished')return;state.shot=name;document.querySelectorAll('.shot-btn').forEach(b=>b.classList.toggle('active',b.dataset.shot===name));}
-function startMatch(){state.started=true;state.phase='ready';$('#startOverlay').classList.add('hidden');setCallout('A. PATEL · RIGHT ARM OVER',true);setTimeout(()=>{if(state.phase==='ready')beginDelivery();},900);}
-function beginDelivery(){if(state.phase==='finished')return;state.phase='delivery';state.delivery={t:0,duration:2.5,hit:false,shot:null,quality:0,startX:(Math.random()-.5)*.24,endX:(Math.random()-.5)*.2};ball.visible=true;ball.position.set(state.delivery.startX,2.2,-10.4);setCallout('WATCH THE BALL',true);bowler.root.rotation.x=-.1;}
+function startMatch(){state.started=true;state.phase='ready';setChallenge(0);$('#startOverlay').classList.add('hidden');setCallout('A. PATEL · RIGHT ARM OVER',true);setTimeout(()=>{if(state.phase==='ready')beginDelivery();},900);}
+function beginDelivery(){if(state.phase==='finished')return;const type=deliveryTypes[state.balls%deliveryTypes.length];state.phase='delivery';state.delivery={...type,t:0,hit:false,shot:null,quality:0,startX:(Math.random()-.5)*.24,endX:(Math.random()-.5)*.2};$('#speed').textContent=type.speed;ball.visible=true;ball.position.set(state.delivery.startX,2.2,-10.4);setCallout(type.name+' · '+type.hint,true);bowler.root.rotation.x=-.1;}
 function hitShot(){
   if(state.phase!=='delivery'||state.delivery.hit)return;
   const d=state.delivery,t=d.t;d.hit=true;d.shot=state.shot;
-  const window=Math.max(0,1-Math.abs(t-2.25)/.66);d.quality=window;
+  const window=Math.max(0,1-Math.abs(t-d.duration*.9)/d.width);d.quality=window;
   batter.bat.rotation.z=-2.25;batter.root.rotation.y=-.27;
   const shot=state.shot;
   let result;
@@ -167,17 +183,18 @@ function resolveBall(){
     const runs=Number(result)||0;state.score+=runs;state.overRuns+=runs;state.bowlerRuns+=runs;state.playerRuns+=runs;state.playerBalls++;
     if(runs%2===1){const temp=state.striker;state.striker=state.partner;state.partner=temp;}
   }
+  updateChallenge(result,d);
   state.balls++;state.overBalls++;
   addBallMark(result);
   ui();ball.visible=false;
   if(state.score>=36||state.wickets>=3||state.balls>=12){finishMatch();return;}
   state.phase='between';setCallout(result===6?'SIX!':result===4?'FOUR!':result==='W'?'NEW BATTER':result?'WELL RUN':'DOT BALL',true);
-  if(state.overBalls===6){state.overBalls=0;state.overRuns=0;document.querySelectorAll('#ballTrack i').forEach(el=>{el.className='empty-ball';el.textContent='';});setTimeout(()=>{if(state.phase==='between')setCallout('END OF OVER · CHANGE OF ENDS',true);},700);}
+  if(state.overBalls===6){state.overBalls=0;state.overRuns=0;document.querySelectorAll('#ballTrack i').forEach(el=>{el.className='empty-ball';el.textContent='';});if(!state.challenge.done){$('#challengeText').textContent='CHALLENGE MISSED';toast('CHALLENGE MISSED');}setTimeout(()=>{if(state.phase==='between'){setChallenge(Math.floor(state.balls/6));setCallout('END OF OVER · NEW CHALLENGE',true);}},700);}
   setTimeout(()=>{if(state.phase==='between')beginDelivery();},1350);
 }
 function addBallMark(result){const marks=document.querySelectorAll('#ballTrack i');const idx=state.overBalls;const el=marks[idx];if(!el)return;el.className='';if(result==='W'){el.classList.add('ball-wicket');el.textContent='W';}else if(result===6){el.classList.add('ball-six');el.textContent='6';}else if(result===4){el.classList.add('ball-four');el.textContent='4';}else if(Number(result)>0){el.classList.add('ball-run');el.textContent=String(result);}else{el.classList.add('ball-dot');el.textContent='·';}}
-function finishMatch(){state.phase='finished';ball.visible=false;setCallout('',false);const won=state.score>=36;$('#resultTitle').textContent=won?'A glorious finish.':state.wickets>=3?'A hard-fought innings.':'Stumps for today.';$('#resultMessage').textContent=won?'You chased down the target with time to spare. The dressing room is waiting.':`You made ${state.score} runs in a patient ${Math.floor(state.balls/6)}-over innings. The next session awaits.`;$('#finalScore').textContent=`${state.score}/${state.wickets}`;$('#resultOverlay').classList.remove('hidden');}
-function resetMatch(){Object.assign(state,{started:false,phase:'idle',shot:'drive',score:0,wickets:0,balls:0,overRuns:0,overBalls:0,playerRuns:0,playerBalls:0,bowlerRuns:0,bowlerWickets:0,striker:'J. HAYES',partner:'M. CARTER',delivery:null});nearWicket.rotation.set(0,0,0);ball.visible=false;document.querySelectorAll('#ballTrack i').forEach(el=>{el.className='empty-ball';el.textContent='';});$('#resultOverlay').classList.add('hidden');$('#startOverlay').classList.remove('hidden');ui();setShot('drive');setCallout('READY WHEN YOU ARE',false);}
+function finishMatch(){state.phase='finished';ball.visible=false;setCallout('',false);const won=state.score>=36;$('#resultTitle').textContent=won?'A glorious finish.':state.wickets>=3?'A hard-fought innings.':'Stumps for today.';$('#resultMessage').textContent=(won?'You chased down the target with time to spare. The dressing room is waiting.':`You made ${state.score} runs in a patient ${Math.floor(state.balls/6)}-over innings. The next session awaits.`)+` Challenge objectives completed: ${state.challengesWon}.`;$('#finalScore').textContent=`${state.score}/${state.wickets}`;$('#resultOverlay').classList.remove('hidden');}
+function resetMatch(){Object.assign(state,{started:false,phase:'idle',shot:'drive',score:0,wickets:0,balls:0,overRuns:0,overBalls:0,playerRuns:0,playerBalls:0,bowlerRuns:0,bowlerWickets:0,striker:'J. HAYES',partner:'M. CARTER',delivery:null,challengesWon:0});nearWicket.rotation.set(0,0,0);ball.visible=false;document.querySelectorAll('#ballTrack i').forEach(el=>{el.className='empty-ball';el.textContent='';});$('#resultOverlay').classList.add('hidden');$('#startOverlay').classList.remove('hidden');setChallenge(0);ui();setShot('drive');$('#speed').textContent='—';setCallout('READY WHEN YOU ARE',false);}
 $('#startBtn').addEventListener('click',startMatch);$('#playAgainBtn').addEventListener('click',resetMatch);$('#resetBtn').addEventListener('click',resetMatch);
 $('#swingBtn').addEventListener('pointerdown',e=>{e.preventDefault();$('#swingBtn').classList.add('pressed');hitShot();});window.addEventListener('pointerup',()=>$('#swingBtn').classList.remove('pressed'));
 document.querySelectorAll('.shot-btn').forEach(b=>b.addEventListener('click',()=>setShot(b.dataset.shot)));
@@ -194,7 +211,7 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
   bowler.root.rotation.x*=.9;
   fielders.forEach((f,i)=>{f.root.rotation.y=Math.sin(time*.7+i)*.06;});
   if(state.phase==='delivery'&&state.delivery){const d=state.delivery;d.t+=dt;const p=Math.min(1,d.t/d.duration);
-    if(!d.hit){const z=-10.4+19.2*p;const bounceT=Math.max(0,(p-.66)/.34);let y=p<.66?2.2-1.35*(p/.66):.27+Math.sin(bounceT*Math.PI*.72)*.75;ball.position.set(d.startX+Math.sin(p*5)*.11,y,z);ball.rotation.x+=dt*8;ball.rotation.z+=dt*5;if(p>.58)setCallout('PLAY YOUR SHOT',true);}
+    if(!d.hit){const landing=d.name==='BOUNCER' ? 0.58 : 0.66;const bounceT=Math.max(0,(p-landing)/(1-landing));let y=p<landing?2.2-1.35*(p/landing):.27+Math.sin(bounceT*Math.PI*.72)*d.bounce;const z=-10.4+19.2*p;ball.position.set(d.startX+Math.sin(p*5)*.11+d.swerve*Math.sin(p*Math.PI)*.34,y,z);ball.rotation.x+=dt*8;ball.rotation.z+=dt*5;if(p>.58)setCallout('PLAY YOUR SHOT',true);}
     else {d.flight+=dt;const u=Math.min(d.flight/1.05,1);const result=d.result;let targetX=0,targetZ=17,targetY=.17;if(result==='W'){targetX=.15;targetZ=9.15;targetY=.25;}else{targetX=(Math.random()-.5)*0;targetZ=result===6?-1:(result===4?15:13);if(d.flight<.06){d.targetX=(Math.random()-.5)*(result===6?8:5);d.targetZ=result===6?-4:(result===4?18:14);}targetX=d.targetX;targetZ=d.targetZ;targetY=result===6?6.7:Math.max(.22,2.8*Math.sin(Math.PI*u));}
       ball.position.set(THREE.MathUtils.lerp(d.startBall.x,targetX,u),THREE.MathUtils.lerp(d.startBall.y,targetY,u)+Math.sin(Math.PI*u)*(result===6?2.2:.3),THREE.MathUtils.lerp(d.startBall.z,targetZ,u));ball.rotation.x+=dt*15;ball.rotation.z+=dt*12;
       if(d.flight>1.18){state.phase='resolve';resolveBall();}
